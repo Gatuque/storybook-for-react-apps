@@ -4,7 +4,7 @@ import { GlobalStyle } from '../src/styles/GlobalStyle'
 import React from 'react'
 import { lightTheme, darkTheme } from '../src/styles/theme'
 import { withDesign } from 'storybook-addon-designs'
-import { BrowserRouter } from 'react-router-dom'
+import { BrowserRouter, MemoryRouter, Routes, Route } from 'react-router-dom'
 import { initialize, mswDecorator } from 'msw-storybook-addon'
 
 import { Provider as StoreProvider } from 'react-redux'
@@ -26,11 +26,19 @@ const withTheme: DecoratorFn = (StoryFn, context) => {
     )
 }
 
-const withRouter: DecoratorFn = (StoryFn) => (
-    <BrowserRouter>
-        <StoryFn />
-            </BrowserRouter>
-        )
+const withRouter: DecoratorFn = (StoryFn, { parameters: { deeplink }}) => {
+    if(!deeplink) {
+        return <BrowserRouter>{StoryFn()}</BrowserRouter>
+    }
+    const { path, route } = deeplink
+    return (
+        <MemoryRouter initialEntries={[encodeURI(route)]}>
+            <Routes>
+                  <Route path={path} element={<StoryFn />} />
+            </Routes> 
+        </MemoryRouter>
+    )
+        }
 
 const withStore: DecoratorFn = (StoryFn, {parameters}) => {
     const store = configureStore({
